@@ -172,16 +172,17 @@
     const tbody = document.getElementById('equipamento-tbody');
     const toggleEditCheckbox = document.getElementById('toggleEdit');
 
-    async function carregarSetores() {
-      const res = await fetch('/setores');
-      const setores = await res.json();
-      setores.forEach(setor => {
-        const option = document.createElement('option');
-        option.value = setor;
-        option.textContent = setor;
-        filtroSetor.appendChild(option);
-      });
-    }
+async function carregarSetores() {
+  filtroSetor.innerHTML = '<option value="">Todos</option>'; // limpa antes
+  const res = await fetch('/setores');
+  const setores = await res.json();
+  setores.forEach(setor => {
+    const option = document.createElement('option');
+    option.value = setor;
+    option.textContent = setor;
+    filtroSetor.appendChild(option);
+  });
+}
 
     async function carregarEquipamentos(setor = '', tipo = '') {
       let url = '/equipamentos?';
@@ -220,14 +221,18 @@
     }
 
     // Exportar PDF com filtros atuais
-    function exportarPDF() {
-      const setor = filtroSetor.value;
-      const tipo = filtroTipo.value;
-      let urlPDF = '/relatorio_pdf?';
-      if (setor) urlPDF += `setor=${encodeURIComponent(setor)}&`;
-      if (tipo) urlPDF += `tipo=${encodeURIComponent(tipo)}`;
-      window.open(urlPDF, '_blank');
-    }
+ function exportarPDF() {
+  const setor = filtroSetor.value;
+  const tipo = filtroTipo.value;
+
+  const params = new URLSearchParams();
+  if (setor) params.append('setor', setor);
+  if (tipo) params.append('tipo', tipo);
+
+  const urlPDF = '/relatorio_pdf' + (params.toString() ? '?' + params.toString() : '');
+  window.open(urlPDF, '_blank');
+}
+
 
     // Evento adicionar equipamento
     document.getElementById('addForm').addEventListener('submit', async (e) => {

@@ -3,8 +3,12 @@ const filtroTipo = document.getElementById('filtroTipo');
 const tbody = document.getElementById('equipamento-tbody');
 
 async function carregarSetores() {
+  // Limpa as opções anteriores para evitar duplicações
+  filtroSetor.innerHTML = '<option value="">Todos</option>';
+
   const res = await fetch('/setores');
   const setores = await res.json();
+
   setores.forEach(setor => {
     const option = document.createElement('option');
     option.value = setor;
@@ -35,6 +39,20 @@ async function carregarEquipamentos() {
   });
 }
 
+async function carregarTipos() {
+  filtroTipo.innerHTML = '<option value="">Todos</option>';
+
+  const res = await fetch('/tipos');
+  const tipos = await res.json();
+
+  tipos.forEach(tipo => {
+    const option = document.createElement('option');
+    option.value = tipo;
+    option.textContent = tipo;
+    filtroTipo.appendChild(option);
+  });
+}
+
 function filtrar() {
   carregarEquipamentos();
 }
@@ -48,6 +66,7 @@ function gerarRelatorioPdf() {
 
 window.onload = () => {
   carregarSetores();
+  carregarTipos();  // se usar o endpoint
   carregarEquipamentos();
 
   filtroSetor.addEventListener('change', filtrar);
@@ -58,3 +77,4 @@ window.onload = () => {
     btnGerarPdf.addEventListener('click', gerarRelatorioPdf);
   }
 };
+
