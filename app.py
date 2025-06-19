@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, render_template, redirect, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -206,4 +207,5 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Usuário admin criado com a senha: admin123")
-    app.run(debug=True)
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
