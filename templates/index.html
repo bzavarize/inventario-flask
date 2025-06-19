@@ -10,7 +10,7 @@
       position: sticky;
       top: 0;
       width: 100%;
-      height: 120px; /* ajuste a altura conforme o logo */
+      height: 120px;
       background-color: white;
       z-index: 1050;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -22,19 +22,28 @@
       object-fit: contain;
     }
 
-    /* Barra de navegação fixa abaixo do cabeçalho */
+    /* Barra de menu fixa abaixo do cabeçalho */
     nav.navbar-fixed {
       position: sticky;
-      top: 120px; /* fica logo abaixo do cabeçalho */
+      top: 120px;
       z-index: 1040;
       background-color: #f8f9fa;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     /* Espaço para conteúdo não ficar atrás da barra fixa */
     body {
-      padding-top: 180px; /* 120 do header + 60 da navbar */
+      padding-top: 180px;
+    }
+
+    /* Centralizar título */
+    h1.title-center {
+      text-align: center;
+      margin-bottom: 30px;
     }
 
     /* Esconder colunas ações inicialmente */
@@ -47,11 +56,11 @@
 
   <!-- Cabeçalho com logo -->
   <header>
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo Hospital Geral de Guarulhos" />
+    <img src="{{ url_for('static', filename='LOGO_HGG_Horizontal.jpg') }}" alt="Logo Hospital Geral de Guarulhos" />
   </header>
 
   <!-- Barra de menu fixa -->
-  <nav class="navbar-fixed d-flex justify-content-between align-items-center">
+  <nav class="navbar-fixed">
     <div>
       <strong>Usuário: {{ current_user.username }}</strong>
     </div>
@@ -60,22 +69,32 @@
     </div>
   </nav>
 
-  <div class="text-center mb-4 p-3 bg-primary text-white rounded">
-    <h2>HOSPITAL GERAL DE GUARULHOS</h2>
-    <h4>INVENTÁRIO ANALÍTICO</h4>
-  </div>
+  <h1 class="title-center">Inventário de Equipamentos</h1>
 
-  <h1 class="mb-4">Inventário de Equipamentos</h1>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="filtroSetor" class="form-label"><strong>Filtrar por Setor:</strong></label>
+      <select id="filtroSetor" class="form-select" onchange="filtrarEquipamentos()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label for="filtroTipo" class="form-label"><strong>Filtrar por Tipo:</strong></label>
+      <select id="filtroTipo" class="form-select" onchange="filtrarEquipamentos()">
+        <option value="">Todos</option>
+        <option>Computador</option>
+        <option>Monitor</option>
+        <option>Nobreak</option>
+        <option>Impressora</option>
+      </select>
+    </div>
+  </div>
 
   <div class="mb-3">
-    <label for="filtroSetor" class="form-label"><strong>Filtrar por Setor:</strong></label>
-    <select id="filtroSetor" class="form-select" onchange="filtrarPorSetor()">
-      <option value="">Todos</option>
-    </select>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">+ Adicionar Equipamento</button>
+    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#userModal">+ Criar Usuário</button>
+    <button class="btn btn-danger" onclick="exportarPDF()">📄 Exportar PDF</button>
   </div>
-
-  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">+ Adicionar Equipamento</button>
-  <button class="btn btn-secondary mb-3" data-bs-toggle="modal" data-bs-target="#userModal">+ Criar Usuário</button>
 
   <div class="form-check mb-3">
     <input class="form-check-input" type="checkbox" id="toggleEdit" onchange="toggleActions()" />
@@ -148,9 +167,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // JavaScript para manipular equipamentos, filtros, edição, exclusão, criação de usuários
-    // Exemplo simples para ilustrar:
     const filtroSetor = document.getElementById('filtroSetor');
+    const filtroTipo = document.getElementById('filtroTipo');
     const tbody = document.getElementById('equipamento-tbody');
     const toggleEditCheckbox = document.getElementById('toggleEdit');
 
@@ -165,9 +183,10 @@
       });
     }
 
-    async function carregarEquipamentos(setor = '') {
-      let url = '/equipamentos';
-      if (setor) url += `?setor=${encodeURIComponent(setor)}`;
+    async function carregarEquipamentos(setor = '', tipo = '') {
+      let url = '/equipamentos?';
+      if (setor) url += `setor=${encodeURIComponent(setor)}&`;
+      if (tipo) url += `tipo=${encodeURIComponent(tipo)}`;
       const res = await fetch(url);
       const equipamentos = await res.json();
       tbody.innerHTML = '';
@@ -189,8 +208,8 @@
       toggleActions();
     }
 
-    function filtrarPorSetor() {
-      carregarEquipamentos(filtroSetor.value);
+    function filtrarEquipamentos() {
+      carregarEquipamentos(filtroSetor.value, filtroTipo.value);
     }
 
     function toggleActions() {
@@ -200,10 +219,17 @@
       });
     }
 
-    // Adicionar, editar e excluir equipamento e criar usuário (você já tem backend para essas rotas)
-    // Aqui você deve implementar as chamadas fetch POST, PUT, DELETE correspondentes
+    // Exportar PDF com filtros atuais
+    function exportarPDF() {
+      const setor = filtroSetor.value;
+      const tipo = filtroTipo.value;
+      let urlPDF = '/relatorio_pdf?';
+      if (setor) urlPDF += `setor=${encodeURIComponent(setor)}&`;
+      if (tipo) urlPDF += `tipo=${encodeURIComponent(tipo)}`;
+      window.open(urlPDF, '_blank');
+    }
 
-    // Exemplo: Adicionar equipamento (com modal)
+    // Evento adicionar equipamento
     document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
@@ -217,13 +243,13 @@
         e.target.reset();
         const modal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
         modal.hide();
-        carregarEquipamentos(filtroSetor.value);
+        filtrarEquipamentos();
       } else {
         alert('Erro ao adicionar equipamento');
       }
     });
 
-    // Exemplo: Criar usuário
+    // Evento criar usuário
     document.getElementById('userForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
@@ -243,12 +269,18 @@
       }
     });
 
-    // Funções editarEquipamento e excluirEquipamento você pode implementar conforme seu backend
+    // Placeholder para editar/excluir equipamento
+    function editarEquipamento(id) {
+      alert('Função editarEquipamento ainda não implementada. ID: ' + id);
+    }
+    function excluirEquipamento(id) {
+      alert('Função excluirEquipamento ainda não implementada. ID: ' + id);
+    }
 
     window.onload = () => {
       carregarSetores();
-      carregarEquipamentos();
-    }
+      filtrarEquipamentos();
+    };
   </script>
 </body>
 </html>

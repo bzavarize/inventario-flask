@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class Equipamento(db.Model):
+    __tablename__ = 'equipamentos'  # (opcional) Define o nome da tabela no banco
+
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False)
     patrimonio_arklok = db.Column(db.String(50), nullable=False, unique=True)

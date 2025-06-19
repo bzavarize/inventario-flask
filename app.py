@@ -4,6 +4,7 @@ from flask_login import (
     LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 )
 from weasyprint import HTML
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///inventario.db'
@@ -16,7 +17,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-
 # Modelos
 class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,7 +26,6 @@ class Usuario(db.Model, UserMixin):
 
     def get_id(self):
         return self.username
-
 
 class Equipamento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,19 +43,11 @@ class Equipamento(db.Model):
             'hostname': self.hostname
         }
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return Usuario.query.filter_by(username=user_id).first()
 
-
-# Rotas principais
-@app.route('/')
-@login_required
-def index():
-    return render_template('index.html')
-
-
+# Autenticação
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -69,14 +60,19 @@ def login():
         return render_template('login.html', erro='Credenciais inválidas')
     return render_template('login.html')
 
-
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return jsonify({'message': 'Desconectado'})
+    return redirect('/login')
 
+# Página principal
+@app.route('/')
+@login_required
+def index():
+    return render_template('index.html')
 
+# Usuários (Admin)
 @app.route('/usuarios', methods=['POST'])
 @login_required
 def criar_usuario():
@@ -92,15 +88,18 @@ def criar_usuario():
     db.session.commit()
     return jsonify({'message': 'Usuário criado com sucesso'})
 
-
+# Equipamentos
 @app.route('/equipamentos', methods=['GET', 'POST'])
 @login_required
 def equipamentos():
     if request.method == 'GET':
         setor = request.args.get('setor')
+        tipo = request.args.get('tipo')
         query = Equipamento.query
         if setor:
             query = query.filter_by(setor=setor)
+        if tipo:
+            query = query.filter_by(tipo=tipo)
         equipamentos = query.all()
         return jsonify([e.to_dict() for e in equipamentos])
 
@@ -117,7 +116,6 @@ def equipamentos():
         db.session.add(novo)
         db.session.commit()
         return jsonify(novo.to_dict()), 201
-
 
 @app.route('/equipamentos/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
@@ -145,7 +143,7 @@ def equipamento_id(id):
         db.session.commit()
         return '', 204
 
-
+# Lista de setores únicos
 @app.route('/setores', methods=['GET'])
 @login_required
 def setores():
@@ -153,25 +151,36 @@ def setores():
     lista_setores = [s[0] for s in setores if s[0]]
     return jsonify(lista_setores)
 
-
-@app.route('/relatorio')
+# Geração de relatório PDF com filtros
+@app.route('/relatorio_pdf')
 @login_required
-def relatorio():
-    equipamentos = Equipamento.query.all()
-    rendered = render_template('relatorio_pdf.html', equipamentos=equipamentos)
-    pdf = HTML(string=rendered).write_pdf()
+def relatorio_pdf():
+    setor = request.args.get('setor')
+    tipo = request.args.get('tipo')
 
+    query = Equipamento.query
+    if setor:
+        query = query.filter_by(setor=setor)
+    if tipo:
+        query = query.filter_by(tipo=tipo)
+    equipamentos = query.all()
+
+    data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+
+    rendered = render_template(
+        'relatorio_pdf.html',
+        equipamentos=equipamentos,
+        usuario=current_user.username,
+        data_hora=data_hora
+    )
+
+    pdf = HTML(string=rendered).write_pdf()
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=relatorio.pdf'
     return response
 
-@app.route('/relatorio_pdf')
-@login_required
-def relatorio_pdf():
-    # código que gera o PDF
-    pass
-
+# Execução
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

@@ -1,53 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
-    h1, h2, h3 { text-align: center; }
-    .logo { width: 160px; margin-bottom: 10px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
-    th, td { border: 1px solid #000; padding: 6px; font-size: 12px; }
-    th { background-color: #eee; }
-    .setor-title { background: #cce5ff; padding: 10px; margin-top: 30px; font-size: 16px; }
-    .small { font-size: 12px; text-align: right; margin-top: -10px; }
-  </style>
+<meta charset="UTF-8" />
+<title>Relatório de Equipamentos</title>
+<style>
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid black; padding: 5px; text-align: left; }
+  th { background-color: #ddd; }
+</style>
 </head>
 <body>
+  <h2>Relatório de Equipamentos</h2>
+  <p><strong>Usuário:</strong> {{ usuario }}</p>
+  <p><strong>Data/Hora:</strong> {{ data_hora }}</p>
 
-  <div class="header">
-    <img src="{{ url_for('static', filename='LOGO_HGG_Horizontal.jpg') }}" alt="Logo HGG" class="logo">
-    <h2>Hospital Geral de Guarulhos</h2>
-    <h3>Relatório Analítico de Inventário</h3>
-    <p class="small">Gerado em: {{ data_hora }}</p>
-  </div>
-
-  {% for grupo in dados %}
-    <div>
-      <div class="setor-title">Setor: {{ grupo.setor }} ({{ grupo.total }} equipamentos)</div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tipo</th>
-            <th>Patrimônio</th>
-            <th>Hostname</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for eq in grupo.equipamentos %}
-            <tr>
-              <td>{{ eq.id }}</td>
-              <td>{{ eq.tipo }}</td>
-              <td>{{ eq.patrimonio_arklok }}</td>
-              <td>{{ eq.hostname }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% endfor %}
-
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Patrimônio</th>
+        <th>Setor</th>
+        <th>Hostname</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in equipamentos %}
+      <tr>
+        <td>{{ e.id }}</td>
+        <td>{{ e.tipo }}</td>
+        <td>{{ e.patrimonio_arklok }}</td>
+        <td>{{ e.setor }}</td>
+        <td>{{ e.hostname or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </body>
 </html>
